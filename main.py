@@ -47,7 +47,7 @@ def main(args):
         f"{args.currency.title()}'s highest trading volume was {round(max_volume, 2)}€ on {volume_date}.")
 
     profit = best_profit(prices) # Get most profitable days and prices
-    if profit['buy'] < profit['sell']:
+    if profit is not None:
         buy_date = datetime.datetime.utcfromtimestamp(
             profit['buy'] / 1000).date()
         sell_date = datetime.datetime.utcfromtimestamp(
@@ -86,7 +86,7 @@ def best_profit(prices):
     for timestamp1, price1 in prices:
         for timestamp2, price2 in prices:
             diff = price2 - price1
-            if diff > 0:
+            if (diff > 0) and (timestamp1 < timestamp2):
                 profit.append({
                     "buy": timestamp1,
                     "sell": timestamp2,
@@ -94,10 +94,11 @@ def best_profit(prices):
                     "sell_price": price2,
                     "difference": diff
                 })
-
-    max_diff = max(x['difference'] for x in profit)
-    return [x for x in profit if x['difference'] == max_diff][0]
-
+    try:
+        max_diff = max(x['difference'] for x in profit)
+        return [x for x in profit if x['difference'] == max_diff][0]
+    except ValueError: #shouldn't buy
+        return None
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
